@@ -1,0 +1,106 @@
+import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
+
+import javax.sql.DataSource;
+import javax.xml.crypto.Data;
+import java.sql.*;
+
+public class DBUtil {
+
+    private static final String URL = "jdbc:mysql://localhost:3306/java12";
+    private static final String USERNAME = "root";
+    private static final String PASSWORD = "";
+
+    private static DataSource DATASOURCE = new MysqlDataSource();
+    static {
+        ((MysqlDataSource)DATASOURCE).setURL(URL);
+        ((MysqlDataSource)DATASOURCE).setUser(USERNAME);
+        ((MysqlDataSource)DATASOURCE).setPassword(PASSWORD);
+    }
+
+    private static DataSource DATASOURCE2;
+    // 单例
+    // 私有构造方法什么都不写，代表除了我自己，其他地方都不能使用 new DBUtil 这种方式来创建对象
+    // 这样做好以后，其他地方不能调用我的属性
+    private DBUtil() {
+
+    }
+
+    public static void main(String[] args) {
+        System.out.println(getConnection1());
+        System.out.println(getConnection2());
+        System.out.println(getDatasource());
+    }
+
+    // 通过第一种方式来获取数据库连接
+
+    /**
+     *  第一种 DriverManager 的方式获取数据库连接
+     * @return
+     */
+    public static Connection getConnection1() {
+        Connection connection = null;
+        try {
+            try {
+                Class.forName("com.mysql.jdbc.Driver");
+                connection = DriverManager.
+                            getConnection(URL, USERNAME, PASSWORD);
+            } finally {
+                connection.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("数据库连接失败！");
+        }
+        return connection;
+    }
+
+    // 第二种方式获取数据库连接
+
+    /**
+     *  DataSource 静态变量 + 静态代码块方式
+     * @return
+     */
+    public static Connection getConnection2() {
+
+        try {
+            return DATASOURCE.getConnection();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("数据库连接失败！");
+        }
+    }
+
+    /**
+     * 单例的方式
+     * @return
+     */
+    public static DataSource getDatasource() {
+        // 简单的单例实现
+        if (DATASOURCE2 == null) {
+            DATASOURCE2 = new MysqlDataSource();
+            ((MysqlDataSource)DATASOURCE2).setURL(URL);
+            ((MysqlDataSource)DATASOURCE2).setUser(USERNAME);
+            ((MysqlDataSource)DATASOURCE2).setPassword(PASSWORD);
+        }
+        return DATASOURCE2;
+    }
+
+    public static void close(Connection connection,
+                             Statement statement, ResultSet resultSet) {
+        try {
+            if (resultSet != null) {
+                resultSet.close();
+            }
+            if (statement != null) {
+                statement.close();
+            }
+            if (connection != null) {
+                connection.close();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("释放资源失败！");
+        }
+    }
+}
+
